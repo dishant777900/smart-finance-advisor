@@ -80,10 +80,13 @@ def get_ai_response(user_input):
 You are a smart AI finance advisor.
 
 STRICT RULES:
-- ONLY give bullet points
+- DO NOT include any thinking, reasoning, or explanations
+- DO NOT use <think> or any tags
+- ONLY return 4 to 6 short bullet points
+- keep each point under 15 words
 - Each line must start with "-"
-- Maximum 4 points
-- No paragraphs
+- Each line must be a clear actionable tip
+- DO NOT write paragraphs
 - Use simple English
 - Talk directly using "you"
 - Use this expense data: {expense_summary}

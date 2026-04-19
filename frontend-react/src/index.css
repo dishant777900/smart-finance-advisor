@@ -1,0 +1,34 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* 🔹 Global styles */
+body {
+  margin: 0;
+  font-family: 'Segoe UI', sans-serif;
+  background: linear-gradient(to right, #e0f2fe, #bfdbfe);
+}
+
+/* 🔹 Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* 🔹 Custom scrollbar (optional but looks good) */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #3b82f6;
+  border-radius: 10px;
+}
+
+/* 🔹 Utility classes (optional reusable styles) */
+.card {
+  @apply bg-white/60 backdrop-blur-lg p-4 rounded-xl shadow;
+}
+
+.button-primary {
+  @apply bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700;
+}
