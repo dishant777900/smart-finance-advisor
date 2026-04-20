@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import ChatBox from "../components/ChatBox";
 import RecentQueries from "../components/RecentQueries";
 import useChat from "../hooks/useChat";
@@ -9,41 +9,105 @@ export default function Dashboard({ user, onLogout }) {
   const [expenses, setExpenses] = useState([]);
   const [amount, setAmount] = useState("");
   const [category, setCategory] = useState("");
+  const [personalization, setPersonalization] = useState("");
+  const [language, setLanguage] = useState("Auto Detect");
 
   // ✅ Chat Hook
   const { messages, sendMessage, loading } = useChat();
 
-  const addExpense = () => {
-    if (!amount || !category) return;
+  // ✅ Load saved expenses + settings for current user
+  useEffect(() => {
+    if (!user?.gmail) return;
 
-    const newExpense = { amount, category };
-    setExpenses([...expenses, newExpense]);
+    const savedExpenses = localStorage.getItem(`expenses_${user.gmail}`);
+    if (savedExpenses) {
+      setExpenses(JSON.parse(savedExpenses));
+    }
+
+    const savedPersonalization = localStorage.getItem(
+      `personalization_${user.gmail}`
+    );
+    if (savedPersonalization) {
+      setPersonalization(savedPersonalization);
+    }
+
+    const savedLanguage = localStorage.getItem(`language_${user.gmail}`);
+    if (savedLanguage) {
+      setLanguage(savedLanguage);
+    } else {
+      setLanguage(navigator.language || "Auto Detect");
+    }
+  }, [user]);
+
+  // ✅ Add Expense and save per user
+  const addExpense = () => {
+    if (!amount || !category) {
+      alert("Please fill all fields");
+      return;
+    }
+
+    const newExpense = {
+      id: Date.now(),
+      amount: Number(amount),
+      category,
+      date: new Date().toLocaleDateString(),
+    };
+
+    const updatedExpenses = [...expenses, newExpense];
+    setExpenses(updatedExpenses);
+
+    if (user?.gmail) {
+      localStorage.setItem(
+        `expenses_${user.gmail}`,
+        JSON.stringify(updatedExpenses)
+      );
+    }
 
     setAmount("");
     setCategory("");
   };
 
+  // ✅ Save personalization
+  const savePersonalization = () => {
+    if (user?.gmail) {
+      localStorage.setItem(
+        `personalization_${user.gmail}`,
+        personalization
+      );
+      alert("Personalization saved");
+    }
+  };
+
+  // ✅ Save language
+  const handleLanguageChange = (value) => {
+    setLanguage(value);
+    if (user?.gmail) {
+      localStorage.setItem(`language_${user.gmail}`, value);
+    }
+  };
+
   return (
     <div className="flex h-screen">
-      
       {/* 🔹 Sidebar */}
       <div className="w-64 bg-blue-900 text-white p-5 flex flex-col">
         <h2 className="text-2xl font-bold mb-8">Finance AI</h2>
 
         <p
-          className={`cursor-pointer mb-3 ${active === "dashboard" && "font-bold"}`}
+          className={`cursor-pointer mb-3 ${active === "dashboard" ? "font-bold" : ""}`}
           onClick={() => setActive("dashboard")}
         >
           Dashboard
         </p>
+
         <p
-          className={`cursor-pointer mb-3 ${active === "expenses" && "font-bold"}`}
+          className={`cursor-pointer mb-3 ${active === "expenses" ? "font-bold" : ""}`}
           onClick={() => setActive("expenses")}
         >
           Expenses
         </p>
+
         <p
-          className={`cursor-pointer mb-3 ${active === "settings" && "font-bold"}`}
+          className={`cursor-pointer mb-3 ${active === "settings" ? "font-bold" : ""}`}
           onClick={() => setActive("settings")}
         >
           Settings
@@ -59,7 +123,6 @@ export default function Dashboard({ user, onLogout }) {
 
       {/* 🔹 Main */}
       <div className="flex-1 p-6 bg-gray-100 overflow-y-auto">
-
         {/* ================= DASHBOARD ================= */}
         {active === "dashboard" && (
           <div>
@@ -74,7 +137,6 @@ export default function Dashboard({ user, onLogout }) {
 
             {/* 💬 Chat Section */}
             <div className="grid grid-cols-2 gap-6">
-              
               <div className="bg-white p-4 rounded shadow h-[400px] overflow-y-auto">
                 <h3 className="font-semibold mb-2">Recent Queries</h3>
                 <RecentQueries messages={messages} />
@@ -88,7 +150,6 @@ export default function Dashboard({ user, onLogout }) {
                   loading={loading}
                 />
               </div>
-
             </div>
           </div>
         )}
@@ -121,7 +182,7 @@ export default function Dashboard({ user, onLogout }) {
               </button>
             </div>
 
-            {/* 📊 CHART ADDED HERE */}
+            {/* 📊 Chart */}
             <ExpenseChart expenses={expenses} />
 
             {/* Expense Cards */}
@@ -129,10 +190,11 @@ export default function Dashboard({ user, onLogout }) {
               {expenses.length === 0 ? (
                 <p>No expenses yet</p>
               ) : (
-                expenses.map((e, i) => (
-                  <div key={i} className="bg-white p-4 rounded shadow">
+                expenses.map((e) => (
+                  <div key={e.id} className="bg-white p-4 rounded shadow">
                     <p className="text-lg font-bold">₹{e.amount}</p>
                     <p className="text-gray-600">{e.category}</p>
+                    <p className="text-sm text-gray-400 mt-1">{e.date}</p>
                   </div>
                 ))
               )}
@@ -153,7 +215,15 @@ export default function Dashboard({ user, onLogout }) {
               <textarea
                 className="w-full border p-3 rounded"
                 placeholder="Describe your financial goals..."
+                value={personalization}
+                onChange={(e) => setPersonalization(e.target.value)}
               />
+              <button
+                onClick={savePersonalization}
+                className="mt-3 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+              >
+                Save
+              </button>
             </div>
 
             {/* Language */}
@@ -161,7 +231,11 @@ export default function Dashboard({ user, onLogout }) {
               <label className="block font-medium mb-1">
                 Language
               </label>
-              <select className="w-full border p-2 rounded">
+              <select
+                className="w-full border p-2 rounded"
+                value={language}
+                onChange={(e) => handleLanguageChange(e.target.value)}
+              >
                 <option>Auto Detect</option>
                 <option>English</option>
                 <option>Hindi</option>
@@ -169,7 +243,6 @@ export default function Dashboard({ user, onLogout }) {
             </div>
           </div>
         )}
-
       </div>
     </div>
   );

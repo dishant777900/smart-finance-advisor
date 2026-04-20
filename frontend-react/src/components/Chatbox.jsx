@@ -19,32 +19,39 @@ export default function ChatBox({ messages, sendMessage, loading }) {
   }, [messages, loading]);
 
   return (
-    <div className="w-2/3 bg-white/60 backdrop-blur-lg p-4 rounded-xl shadow flex flex-col">
+    <div className="h-full flex flex-col bg-white/60 backdrop-blur-lg p-4 rounded-xl shadow overflow-hidden">
       <h3 className="mb-2 font-semibold">💬 Chat</h3>
 
-      <div ref={chatRef} className="flex-1 overflow-y-auto space-y-2 mb-3">
+      {/* Messages Area */}
+      <div
+        ref={chatRef}
+        className="flex-1 overflow-y-auto space-y-2 mb-3 pr-1"
+      >
         {messages.map((m, i) => (
-          <MessageBubble key={i} type={m.type} text={m.text} />
+          <div key={i} className="max-w-full break-words whitespace-pre-wrap">
+            <MessageBubble type={m.type} text={m.text} />
+          </div>
         ))}
 
         {loading && (
-          <div className="bg-gray-200 p-2 rounded-xl w-fit">
+          <div className="bg-gray-200 p-2 rounded-xl w-fit max-w-full break-words">
             Typing...
           </div>
         )}
       </div>
 
-      <div className="flex gap-2">
+      {/* Input Area */}
+      <div className="flex gap-2 pt-2 border-t">
         <input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          className="flex-1 p-2 rounded border"
+          className="flex-1 p-2 rounded border outline-none"
           placeholder="Ask about your finances..."
           onKeyDown={(e) => e.key === "Enter" && handleSend()}
         />
         <button
           onClick={handleSend}
-          className="bg-blue-600 text-white px-4 rounded"
+          className="bg-blue-600 text-white px-4 rounded hover:bg-blue-700"
         >
           Send
         </button>

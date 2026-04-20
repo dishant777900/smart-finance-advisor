@@ -5,22 +5,28 @@ export default function AddExpense({ onAdd }) {
   const [category, setCategory] = useState("");
 
   const handleAdd = () => {
-    if (!amount || !category) return;
+    if (!amount || !category) {
+      alert("Please fill all fields");
+      return;
+    }
 
     const newExpense = {
+      id: Date.now(), // ✅ unique id
       amount: Number(amount),
       category,
-      date: new Date().toLocaleDateString(),
+      date: new Date().toLocaleDateString(), // ✅ used for charts later
     };
 
     onAdd(newExpense);
+
+    // reset fields
     setAmount("");
     setCategory("");
   };
 
   return (
-    <div className="card">
-      <h3 className="mb-3 font-semibold">➕ Add Expense</h3>
+    <div className="bg-white p-4 rounded shadow">
+      <h3 className="mb-3 font-semibold text-lg">➕ Add Expense</h3>
 
       <input
         type="number"
@@ -38,8 +44,11 @@ export default function AddExpense({ onAdd }) {
         className="w-full mb-3 p-2 border rounded"
       />
 
-      <button onClick={handleAdd} className="button-primary w-full">
-        Add
+      <button
+        onClick={handleAdd}
+        className="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600"
+      >
+        Add Expense
       </button>
     </div>
   );

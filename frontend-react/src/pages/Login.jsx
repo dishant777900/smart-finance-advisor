@@ -5,19 +5,30 @@ export default function Login({ setPage, setUser }) {
   const [password, setPassword] = useState("");
 
   const handleLogin = () => {
-    const storedUser = JSON.parse(localStorage.getItem("user"));
+    if (!gmail || !password) {
+      alert("Please fill all fields");
+      return;
+    }
 
-    if (!storedUser || storedUser.gmail !== gmail) {
+    const storedUsers = JSON.parse(localStorage.getItem("users")) || [];
+
+    const foundUser = storedUsers.find((u) => u.gmail === gmail);
+
+    if (!foundUser) {
       alert("Mail not registered");
       return;
     }
 
-    if (storedUser.password !== password) {
+    if (foundUser.password !== password) {
       alert("Invalid password");
       return;
     }
 
-    setUser(storedUser);
+    // ✅ save currently logged in user
+    localStorage.setItem("currentUser", JSON.stringify(foundUser));
+
+    // ✅ update app state
+    setUser(foundUser);
     setPage("dashboard");
   };
 
@@ -29,20 +40,22 @@ export default function Login({ setPage, setUser }) {
         <input
           type="email"
           placeholder="Gmail"
-          className="w-full p-2 border mb-3"
+          value={gmail}
+          className="w-full p-2 border mb-3 rounded"
           onChange={(e) => setGmail(e.target.value)}
         />
 
         <input
           type="password"
           placeholder="Password"
-          className="w-full p-2 border mb-3"
+          value={password}
+          className="w-full p-2 border mb-3 rounded"
           onChange={(e) => setPassword(e.target.value)}
         />
 
         <button
           onClick={handleLogin}
-          className="w-full bg-blue-500 text-white p-2 rounded"
+          className="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600"
         >
           Login
         </button>

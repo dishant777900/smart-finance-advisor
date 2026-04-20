@@ -11,11 +11,31 @@ export default function Register({ setPage }) {
       return;
     }
 
-    const user = { username, gmail, password };
+    const storedUsers = JSON.parse(localStorage.getItem("users")) || [];
 
-    localStorage.setItem("user", JSON.stringify(user));
+    const alreadyExists = storedUsers.find((u) => u.gmail === gmail);
+
+    if (alreadyExists) {
+      alert("Gmail already registered");
+      return;
+    }
+
+    const newUser = {
+      id: Date.now(),
+      username,
+      gmail,
+      password,
+    };
+
+    const updatedUsers = [...storedUsers, newUser];
+
+    localStorage.setItem("users", JSON.stringify(updatedUsers));
 
     alert("Registered successfully");
+
+    setUsername("");
+    setGmail("");
+    setPassword("");
 
     setPage("login");
   };
@@ -28,27 +48,30 @@ export default function Register({ setPage }) {
         <input
           type="text"
           placeholder="Username"
-          className="w-full p-2 border mb-3"
+          value={username}
+          className="w-full p-2 border mb-3 rounded"
           onChange={(e) => setUsername(e.target.value)}
         />
 
         <input
           type="email"
           placeholder="Gmail"
-          className="w-full p-2 border mb-3"
+          value={gmail}
+          className="w-full p-2 border mb-3 rounded"
           onChange={(e) => setGmail(e.target.value)}
         />
 
         <input
           type="password"
           placeholder="Password"
-          className="w-full p-2 border mb-3"
+          value={password}
+          className="w-full p-2 border mb-3 rounded"
           onChange={(e) => setPassword(e.target.value)}
         />
 
         <button
           onClick={handleRegister}
-          className="w-full bg-green-500 text-white p-2 rounded"
+          className="w-full bg-green-500 text-white p-2 rounded hover:bg-green-600"
         >
           Register
         </button>

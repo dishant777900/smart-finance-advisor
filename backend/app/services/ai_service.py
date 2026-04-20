@@ -10,60 +10,59 @@ load_dotenv()
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 
 
-# 🔥 FORCE CLEAN BULLET OUTPUT
 def format_response(text):
-    lines = text.split("\n")
-    clean = []
+    """
+    Clean AI output without over-restricting it.
+    Keeps paragraphs and bullets readable.
+    """
+    text = text.replace("<think>", "").replace("</think>", "").strip()
 
-    for line in lines:
+    lines = []
+    for line in text.split("\n"):
         line = line.strip()
-
         if not line:
             continue
 
-        # Remove numbering (1. 2. etc.)
-        if line[0].isdigit():
+        # Remove numbering like 1. 2. if present
+        if len(line) > 1 and line[0].isdigit() and "." in line:
             parts = line.split(".", 1)
             if len(parts) > 1:
                 line = parts[1].strip()
 
-        # Ensure bullet format
-        if not line.startswith("-"):
-            line = "- " + line
-
         # Replace "they" with "you"
         line = line.replace("they", "you")
 
-        clean.append(line)
+        lines.append(line)
 
-    # If AI returns paragraph → convert to bullets
-    if len(clean) < 2:
-        sentences = text.replace("\n", " ").split(".")
-        clean = []
-        for s in sentences:
-            s = s.strip()
-            if s:
-                clean.append("- " + s.replace("they", "you"))
+    if not lines:
+        return "Sorry, I could not generate a proper response."
 
-    return "\n".join(clean[:4])
+    return "\n\n".join(lines)
 
 
 def get_ai_response(user_input):
-    # 🧠 Get memory
+    # Memory
     past = get_memory()
 
     context = ""
     for item in past:
-        context += f"User: {item.get('input','')}\nAI: {item.get('response','')}\n"
+        context += f"User: {item.get('input', '')}\nAI: {item.get('response', '')}\n"
 
-    # 💸 Get expenses
-    expenses = get_expenses()
+    # Expenses
+    try:
+        expenses = get_expenses()
+    except Exception:
+        expenses = []
 
     expense_summary = ""
-    for e in expenses[:5]:
-        expense_summary += f"{e['category']}: {e['amount']}, "
+    if isinstance(expenses, list) and expenses:
+        for e in expenses[:5]:
+            category = e.get("category", "unknown")
+            amount = e.get("amount", 0)
+            expense_summary += f"{category}: {amount}, "
+    else:
+        expense_summary = "No expense data available."
 
-    # 🌐 API call
     url = "https://api.groq.com/openai/v1/chat/completions"
 
     headers = {
@@ -79,38 +78,37 @@ def get_ai_response(user_input):
                 "content": f"""
 You are a smart AI finance advisor.
 
-STRICT RULES:
-- DO NOT include any thinking, reasoning, or explanations
-- DO NOT use <think> or any tags
-- Only return 2 to 3 line of paragraph
-- Return 5 short bullet points
-- keep each point under 20 words
-- Each line must start with "-"
-- Each line must be a clear actionable tip
-- DO NOT write paragraphs
+Rules:
+- Talk directly to the user using "you"
+- Give clear, practical, easy-to-understand advice
+- Explain in a natural way like a helpful assistant
 - Use simple English
-- Talk directly using "you"
-- Use this expense data: {expense_summary}
+- Avoid robotic or overly short answers
+- Do not include hidden reasoning, tags, or <think>
+- If useful, use short bullet points
+- If useful, use a short paragraph followed by bullet points
+- Keep the response concise but meaningful
+- Use this expense data when relevant: {expense_summary}
 """
             },
             {
                 "role": "user",
                 "content": context + "\nUser: " + user_input
             }
-        ]
+        ],
+        "temperature": 0.7
     }
 
     try:
         res = requests.post(url, headers=headers, json=data)
 
         if res.status_code != 200:
-            return "Error: AI service not responding"
+            return f"Error: AI service not responding ({res.status_code})"
 
         result = res.json()
         answer = result["choices"][0]["message"]["content"]
 
-        # 🔥 Clean & format output
         return format_response(answer)
 
-    except Exception as e:
+    except Exception:
         return "Error generating response"
